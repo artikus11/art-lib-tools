@@ -1,6 +1,6 @@
 <?php
 
-namespace Art\Lib\Tools\Helpers;
+namespace Art\LibTools\Helpers;
 /**
  * Универсальный помощник для логирования.
  * Работает с WooCommerce (если есть) или через системный error_log (как fallback).
