@@ -1,6 +1,6 @@
 <?php
 
-namespace ArtLibTools\WordPress\LocalPlugins;
+namespace Art\LibTools\WordPress\LocalPlugins;
 
 /**
  * Class PluginUpdateDisabler
