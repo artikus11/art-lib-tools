@@ -24,6 +24,8 @@ class HPOSCompatibleTest extends TestCase {
 
 		$hpos->boot();
 		$hpos->boot();
+
+		$this->assertConditionsMet();
 	}
 
 

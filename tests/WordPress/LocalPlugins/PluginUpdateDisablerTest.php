@@ -34,6 +34,8 @@ class PluginUpdateDisablerTest extends TestCase {
 
 		$this->disabler->boot();
 		$this->disabler->boot();
+
+		$this->assertConditionsMet();
 	}
 
 

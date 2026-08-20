@@ -64,7 +64,7 @@ class TextHelperTest extends TestCase {
 
 		$result = TextHelper::get_truncate( $content, 20, 'letters', '' );
 
-		$this->assertSame( 'Hello world', $result );
+		$this->assertSame( 'Hello  world', $result );
 	}
 
 

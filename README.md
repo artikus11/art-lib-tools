@@ -2,6 +2,11 @@
 
 Набор переиспользуемых PHP-хелперов и утилит для разработки под WordPress и WooCommerce.
 
+Пакет: `art/lib-tools` **1.3.0** (MIT). Неймспейс: `Art\LibTools\`.
+
+Требования: PHP 8.0+, WordPress 5.5+. Это библиотека, не плагин: хуки регистрируются только после явного вызова
+`boot()`.
+
 ---
 
 ## Установка
@@ -20,7 +25,6 @@
     "art/lib-tools": "dev-master"
   }
 }
-
 ```
 
 ---
@@ -40,7 +44,9 @@ art-lib-tools/
 │       │   └── PluginUpdateDisabler.php  # Отключение проверок обновлений для локальных/самописных плагинов
 │       └── WooCommerce/
 │           └── HPOSCompatible.php        # Декларация совместимости с HPOS (High-Performance Order Storage)
-
+├── tests/                      # PHPUnit + WP_Mock
+├── phpunit.xml.dist
+└── phpcs.xml
 ```
 
 ---
@@ -66,7 +72,6 @@ LogHelper::log( $data_array, 'debug', 'my-plugin-slug' );
 // Запись с проверкой флага в get_option('my_plugin_settings')['debug_logging']
 // Сообщения уровня 'error' пишутся всегда, независимо от настройки
 LogHelper::log( $debug_info, 'debug', 'my-plugin-slug', 'my_plugin_settings' );
-
 ```
 
 ---
@@ -85,7 +90,6 @@ $short_words = TextHelper::get_truncate( $post_content, 20, 'words' );
 // Склонение слов после чисел
 echo 1 . ' ' . TextHelper::plural_form( 1, 'книга,книги,книг' );  // 1 книга
 echo 3 . ' ' . TextHelper::plural_form( 3, [ 'товар', 'товара', 'товаров' ] ); // 3 товара
-
 ```
 
 ---
@@ -105,7 +109,6 @@ $is_online = UrlAccessible::is_url_accessible( 'https://example.com/file.jpg', [
 if ( $is_online ) {
     // URL доступен
 }
-
 ```
 
 ---
@@ -126,7 +129,6 @@ $clean_array = UrlNormalizer::process_array( $data_array );
 
 // Очистка внутреннего кэша
 UrlNormalizer::clear_cache();
-
 ```
 
 ---
@@ -153,7 +155,6 @@ $disabler->register(
 );
 
 $disabler->boot();
-
 ```
 
 ---
@@ -169,5 +170,19 @@ use Art\LibTools\WordPress\WooCommerce\HPOSCompatible;
 // В основном файле плагина:
 $hpos = new HPOSCompatible( __FILE__, true );
 $hpos->boot();
-
 ```
+
+---
+
+## Разработка
+
+```bash
+composer install
+composer test    # PHPUnit 9 + WP_Mock
+composer phpcs   # WordPress Coding Standards
+composer phpcbf  # автоисправление стиля
+```
+
+Юнит-тесты покрывают хелперы (`LogHelper`, `TextHelper`, `UrlAccessible`, `UrlNormalizer`) и WP-классы (
+`PluginUpdateDisabler`, `HPOSCompatible`). WordPress-функции мокаются через WP_Mock, WooCommerce `FeaturesUtil` — через
+stub в `tests/stubs/`.
