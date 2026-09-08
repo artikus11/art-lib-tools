@@ -2,7 +2,7 @@
 
 Набор переиспользуемых PHP-хелперов и утилит для разработки под WordPress и WooCommerce.
 
-Пакет: `art/lib-tools` **1.3.0** (MIT). Неймспейс: `Art\LibTools\`.
+Пакет: `art/lib-tools` **1.5.0** (MIT). Неймспейс: `Art\LibTools\`.
 
 Требования: PHP 8.0+, WordPress 5.5+. Это библиотека, не плагин: хуки регистрируются только после явного вызова
 `boot()`.
@@ -34,6 +34,8 @@
 ```text
 art-lib-tools/
 ├── src/
+│   ├── ActionScheduler/
+│   │   └── StorePruner.php     # Очистка таблиц Action Scheduler
 │   ├── Helpers/
 │   │   ├── LogHelper.php       # Универсальное логирование (WooCommerce Logger + error_log)
 │   │   ├── TextHelper.php      # Обрезка текста, очистка от шорткодов/медиа, склонение слов
@@ -133,6 +135,50 @@ UrlNormalizer::clear_cache();
 
 ---
 
+### Action Scheduler
+
+#### `StorePruner`
+
+Удаляет строки `actionscheduler_actions` (и связанные claims/logs) без `TRUNCATE`. 
+* `prune_*` — один `SELECT … LIMIT`.
+* `sweep_*` крутит это в PHP, пока есть что удалять, и не ставит задач в Action Scheduler.
+* `forget_actions` снимает конкретные id после успешного выполнения. Site-wide `pending` / `in-progress` библиотека 
+  не запрещает: это ограничение хоста.
+
+```php
+use Art\LibTools\ActionScheduler\StorePruner;
+
+global $wpdb;
+
+$pruner = new StorePruner( $wpdb );
+
+// Суточная гигиена: все группы, complete/failed/canceled старше суток.
+$deleted = $pruner->sweep_actions(
+	[ 'complete', 'failed', 'canceled' ],
+	StorePruner::DEFAULT_CHUNK,
+	null,
+	DAY_IN_SECONDS
+);
+
+// Сброс очереди плагина (включая pending своей группы).
+$deleted = $pruner->sweep_actions(
+	[ 'complete', 'failed', 'canceled', 'pending', 'in-progress' ],
+	StorePruner::DEFAULT_CHUNK,
+	'sklpf_group',
+	null
+);
+
+// Самоудаление после успеха.
+$pruner->forget_actions( [ $action_id ] );
+
+// Orphan-логи и логи старше порога.
+$logs_deleted = $pruner->sweep_logs( StorePruner::DEFAULT_CHUNK, DAY_IN_SECONDS );
+```
+
+Если таблиц AS нет или группа не найдена, методы возвращают `0`. Логи пишутся в source `art-lib-tools`.
+
+---
+
 ### WordPress & WooCommerce
 
 #### `PluginUpdateDisabler`
@@ -183,6 +229,6 @@ composer phpcs   # WordPress Coding Standards
 composer phpcbf  # автоисправление стиля
 ```
 
-Юнит-тесты покрывают хелперы (`LogHelper`, `TextHelper`, `UrlAccessible`, `UrlNormalizer`) и WP-классы (
+Юнит-тесты покрывают хелперы (`LogHelper`, `TextHelper`, `UrlAccessible`, `UrlNormalizer`), `StorePruner` и WP-классы (
 `PluginUpdateDisabler`, `HPOSCompatible`). WordPress-функции мокаются через WP_Mock, WooCommerce `FeaturesUtil` — через
 stub в `tests/stubs/`.
