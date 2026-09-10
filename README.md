@@ -152,7 +152,7 @@ global $wpdb;
 
 $pruner = new StorePruner( $wpdb );
 
-// Суточная гигиена: все группы, complete/failed/canceled старше суток.
+// Гигиена: все группы, complete/failed/canceled старше суток по last_attempt_gmt.
 $deleted = $pruner->sweep_actions(
 	[ 'complete', 'failed', 'canceled' ],
 	StorePruner::DEFAULT_CHUNK,

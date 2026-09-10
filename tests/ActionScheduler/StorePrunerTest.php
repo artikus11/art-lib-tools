@@ -73,7 +73,7 @@ class StorePrunerTest extends TestCase {
 	}
 
 
-	public function test_older_than_adds_scheduled_date(): void {
+	public function test_older_than_adds_last_attempt(): void {
 
 		$this->queue_tables_exist( false );
 		$this->db->get_col_queue[] = [];
@@ -84,7 +84,7 @@ class StorePrunerTest extends TestCase {
 		$select = $this->find_prepare( 'SELECT action_id' );
 
 		$this->assertNotNull( $select );
-		$this->assertStringContainsString( 'scheduled_date_gmt', $select['query'] );
+		$this->assertStringContainsString( 'last_attempt_gmt', $select['query'] );
 		$this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} /', (string) $select['args'][1] );
 	}
 

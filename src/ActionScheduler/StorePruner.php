@@ -39,7 +39,7 @@ class StorePruner {
 	 * @param array<int, string> $statuses Статусы AS: complete, failed, canceled, pending, in-progress.
 	 * @param int                $batch_size
 	 * @param string|null        $group             Slug группы. null — все группы.
-	 * @param int|null           $older_than_seconds Фильтр scheduled_date_gmt. null — без фильтра по дате.
+	 * @param int|null           $older_than_seconds Фильтр last_attempt_gmt. null — без фильтра по дате.
 	 *
 	 * @return int Число удалённых actions в этом батче.
 	 */
@@ -366,7 +366,7 @@ class StorePruner {
 		}
 
 		if ( null !== $older_than_seconds ) {
-			$sql     .= ' AND scheduled_date_gmt <= %s';
+			$sql     .= ' AND last_attempt_gmt <= %s';
 			$params[] = $this->cutoff_gmt( $older_than_seconds );
 		}
 
