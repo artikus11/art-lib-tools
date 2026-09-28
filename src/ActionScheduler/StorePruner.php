@@ -52,18 +52,6 @@ class StorePruner {
 
 		$statuses = $this->sanitize_statuses( $statuses );
 
-		$this->log(
-			'debug',
-			[
-				'message'            => '[StorePruner.prune_actions] start',
-				'group'              => $group,
-				'statuses'           => $statuses,
-				'batch_size'         => $batch_size,
-				'older_than_seconds' => $older_than_seconds,
-				'deleted'            => 0,
-				'wpdb_error'         => '',
-			]
-		);
 
 		if ( [] === $statuses || $batch_size < 1 ) {
 			return 0;
@@ -72,19 +60,6 @@ class StorePruner {
 		$need_groups = null !== $group;
 
 		if ( ! $this->tables_exist( $need_groups ) ) {
-			$this->log(
-				'warning',
-				[
-					'message'            => '[StorePruner.prune_actions] Action Scheduler tables missing',
-					'group'              => $group,
-					'statuses'           => $statuses,
-					'batch_size'         => $batch_size,
-					'older_than_seconds' => $older_than_seconds,
-					'deleted'            => 0,
-					'wpdb_error'         => $this->wpdb->last_error,
-				]
-			);
-
 			return 0;
 		}
 
@@ -106,21 +81,6 @@ class StorePruner {
 
 		$deleted = $this->delete_actions_by_ids( $action_ids, $group, $statuses, $batch_size, $older_than_seconds );
 
-		if ( $deleted > 0 ) {
-			$this->log(
-				'info',
-				[
-					'message'            => '[StorePruner.prune_actions] deleted',
-					'group'              => $group,
-					'statuses'           => $statuses,
-					'batch_size'         => $batch_size,
-					'older_than_seconds' => $older_than_seconds,
-					'deleted'            => $deleted,
-					'wpdb_error'         => '',
-				]
-			);
-		}
-
 		return $deleted;
 	}
 
@@ -132,36 +92,11 @@ class StorePruner {
 	 */
 	public function prune_logs( int $batch_size, ?int $older_than_seconds = null ): int {
 
-		$this->log(
-			'debug',
-			[
-				'message'            => '[StorePruner.prune_logs] start',
-				'group'              => null,
-				'statuses'           => [],
-				'batch_size'         => $batch_size,
-				'older_than_seconds' => $older_than_seconds,
-				'deleted'            => 0,
-				'wpdb_error'         => '',
-			]
-		);
-
 		if ( $batch_size < 1 ) {
 			return 0;
 		}
 
 		if ( ! $this->tables_exist( false ) ) {
-			$this->log(
-				'warning',
-				[
-					'message'            => '[StorePruner.prune_logs] Action Scheduler tables missing',
-					'group'              => null,
-					'statuses'           => [],
-					'batch_size'         => $batch_size,
-					'older_than_seconds' => $older_than_seconds,
-					'deleted'            => 0,
-					'wpdb_error'         => $this->wpdb->last_error,
-				]
-			);
 
 			return 0;
 		}
@@ -176,21 +111,6 @@ class StorePruner {
 
 		if ( false === $deleted ) {
 			return 0;
-		}
-
-		if ( $deleted > 0 ) {
-			$this->log(
-				'info',
-				[
-					'message'            => '[StorePruner.prune_logs] deleted',
-					'group'              => null,
-					'statuses'           => [],
-					'batch_size'         => $batch_size,
-					'older_than_seconds' => $older_than_seconds,
-					'deleted'            => $deleted,
-					'wpdb_error'         => '',
-				]
-			);
 		}
 
 		return $deleted;
