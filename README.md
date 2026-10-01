@@ -2,7 +2,7 @@
 
 Набор переиспользуемых PHP-хелперов и утилит для разработки под WordPress и WooCommerce.
 
-Пакет: `art/lib-tools` **1.5.0** (MIT). Неймспейс: `Art\LibTools\`.
+Пакет: `art/lib-tools` **1.6.0** (MIT). Неймспейс: `Art\LibTools\`.
 
 Требования: PHP 8.0+, WordPress 5.5+. Это библиотека, не плагин: хуки регистрируются только после явного вызова
 `boot()`.
@@ -41,6 +41,8 @@ art-lib-tools/
 │   │   ├── TextHelper.php      # Обрезка текста, очистка от шорткодов/медиа, склонение слов
 │   │   ├── UrlAccessible.php   # Быстрая проверка доступности URL (HEAD/GET с fallback)
 │   │   └── UrlNormalizer.php   # Нормализация URL с внутренним кэшированием
+│   ├── Text/
+│   │   └── TitleNormalizer.php # Нормализация заголовков: единый источник контракта title_hash
 │   └── WordPress/
 │       ├── LocalPlugins/
 │       │   └── PluginUpdateDisabler.php  # Отключение проверок обновлений для локальных/самописных плагинов
@@ -131,6 +133,28 @@ $clean_array = UrlNormalizer::process_array( $data_array );
 
 // Очистка внутреннего кэша
 UrlNormalizer::clear_cache();
+```
+
+---
+
+### Text
+
+#### `TitleNormalizer`
+
+Нормализация заголовков: единый источник цепочки
+`html_entity_decode -> mb_strtolower -> тире -> '-' -> сжатие -> trim` и контракта
+`title_hash = md5( normalize_title )` для skl-плагинов (feed / dedup / title-uniq).
+
+```php
+use Art\LibTools\Text\TitleNormalizer;
+
+$n = new TitleNormalizer();
+
+// Каноническая нормализация title
+$normalized = $n->normalize_title( 'SEO — Оптимизация' ); // 'seo-оптимизация'
+
+// Срез одного хвостового WP-суффикса уникализации slug (-2, -3, ...)
+$slug = $n->slug_strip_suffix( 'vykroyka-123-2' ); // 'vykroyka-123'
 ```
 
 ---
@@ -229,6 +253,7 @@ composer phpcs   # WordPress Coding Standards
 composer phpcbf  # автоисправление стиля
 ```
 
-Юнит-тесты покрывают хелперы (`LogHelper`, `TextHelper`, `UrlAccessible`, `UrlNormalizer`), `StorePruner` и WP-классы (
+Юнит-тесты покрывают хелперы (`LogHelper`, `TextHelper`, `UrlAccessible`, `UrlNormalizer`), `TitleNormalizer`,
+`StorePruner` и WP-классы (
 `PluginUpdateDisabler`, `HPOSCompatible`). WordPress-функции мокаются через WP_Mock, WooCommerce `FeaturesUtil` — через
 stub в `tests/stubs/`.
