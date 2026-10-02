@@ -31,6 +31,11 @@ class wpdb {
 	 */
 	public $query_calls = [];
 
+	/**
+	 * @var array<int, array<string, mixed>|null>
+	 */
+	public $get_row_queue = [];
+
 
 	public function prepare( $query, ...$args ) {
 
@@ -67,6 +72,22 @@ class wpdb {
 		}
 
 		return array_shift( $this->get_col_queue );
+	}
+
+
+	public function get_row( $query = null, $output = null ) {
+
+		if ( [] === $this->get_row_queue ) {
+			return null;
+		}
+
+		return array_shift( $this->get_row_queue );
+	}
+
+
+	public function get_charset_collate() {
+
+		return 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
 	}
 
 
