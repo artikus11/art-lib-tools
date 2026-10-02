@@ -44,6 +44,7 @@ art-lib-tools/
 │   ├── Text/
 │   │   └── TitleNormalizer.php # Нормализация заголовков: единый источник контракта title_hash
 │   └── WordPress/
+│       ├── CatalogLock.php          # Каталожный мьютекс фоновых полных проходов записи каталога (acquire/touch/release/status)
 │       ├── LocalPlugins/
 │       │   └── PluginUpdateDisabler.php  # Отключение проверок обновлений для локальных/самописных плагинов
 │       └── WooCommerce/
@@ -205,6 +206,39 @@ $logs_deleted = $pruner->sweep_logs( StorePruner::DEFAULT_CHUNK, DAY_IN_SECONDS 
 
 ### WordPress & WooCommerce
 
+#### `CatalogLock`
+
+Каталожный мьютекс: одна строка (`id=1`) в общей таблице `wp_skl_catalog_lock`. Защищает фоновые полные проходы
+записи каталога (`wp_posts`/`wp_postmeta`) от параллельной работы (skl-title-uniq apply, skl-dedup-scan scan+purge).
+Лок advisory — защищает только тех, кто вызывает `acquire`. Лок держится активной работой (`touch` на каждый батч)
+и сам освобождается в паузах: истёкший чужой лок «воруется» следующим `acquire` (краш-безопасность).
+
+```php
+use Art\LibTools\WordPress\CatalogLock;
+
+$lock = new CatalogLock();
+
+// Захват. null при успехе, иначе status() (кто держит лок).
+$busy = $lock->acquire( 'skl-title-uniq', 'scan_42', 3600 );
+
+if ( null !== $busy ) {
+    // Каталог занят: $busy['holder'], $busy['expires_in'].
+}
+
+// Продлить лок в конце батча.
+$ok = $lock->touch( 'skl-title-uniq', 3600 );
+
+// Освободить на завершении/остановке/ошибке (идемпотентно).
+$lock->release( 'skl-title-uniq' );
+
+// Текущее состояние: ['holder','note','started_at','locked_until','expires_in'] или null.
+$status = $lock->status();
+```
+
+Таблица создаётся автоматически из `acquire` (через `ensure_schema`, `CREATE TABLE IF NOT EXISTS`).
+
+---
+
 #### `PluginUpdateDisabler`
 
 Удаляет выбранные плагины из структуры `site_transient_update_plugins`, предотвращая лишние запросы на сервер обновлений
@@ -255,5 +289,5 @@ composer phpcbf  # автоисправление стиля
 
 Юнит-тесты покрывают хелперы (`LogHelper`, `TextHelper`, `UrlAccessible`, `UrlNormalizer`), `TitleNormalizer`,
 `StorePruner` и WP-классы (
-`PluginUpdateDisabler`, `HPOSCompatible`). WordPress-функции мокаются через WP_Mock, WooCommerce `FeaturesUtil` — через
+`CatalogLock`, `PluginUpdateDisabler`, `HPOSCompatible`). WordPress-функции мокаются через WP_Mock, WooCommerce `FeaturesUtil` — через
 stub в `tests/stubs/`.
