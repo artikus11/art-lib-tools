@@ -278,6 +278,45 @@ $hpos->boot();
 
 ---
 
+## Changelog
+
+### 1.6.0 — 2026-10-02
+
+- `WordPress\CatalogLock` — каталожный мьютекс фоновых полных проходов записи каталога: `acquire` / `touch` / `release` / `status` + тесты.
+- `Text\TitleNormalizer` — единый нормализатор заголовков (контракт `title_hash`, `slug_strip_suffix`).
+- `docs`: описание `CatalogLock` в README (структура + пример использования).
+- `chore`: синхронизация `composer.lock` (content-hash) после бампа версии.
+
+### 1.5.1 — 2026-09-28
+
+- `ActionScheduler\StorePruner`: проверка по времени завершения — `sweep_actions` по `last_attempt_gmt`.
+- Очистка от лишних логов.
+
+### 1.5.0 — 2026-09-10
+
+- `ActionScheduler\StorePruner` — безопасная очистка таблиц Action Scheduler (`prune_*` / `sweep_*` / `forget_actions` / `sweep_logs`).
+
+### 1.3.0 — 2026-08-14
+
+- `Helpers\UrlAccessible` — дополнительный хелпер для проверки на битую ссылку (HEAD с fallback на диапазонный GET).
+- PHPUnit-тесты для хелперов и WP-утилит.
+- Актуализация версии и README.
+
+### 1.2.0 — 2026-07-19
+
+- Дополнительные хелперы для текста и URL: `TextHelper` (`get_truncate`, `plural_form`) и `UrlNormalizer` (нормализация URL с кэшированием).
+
+### 1.1.0 — 2026-04-22
+
+- `WordPress\LocalPlugins\PluginUpdateDisabler` — отключение проверок обновлений для локальных/самописных плагинов.
+- `WordPress\WooCommerce\HPOSCompatible` — декларация совместимости с High-Performance Order Storage.
+
+### 1.0.0 — 2026-03-25
+
+- Первый релиз библиотеки: инициализация репозитория, неймспейс `Art\LibTools\`, форматирование кода.
+
+---
+
 ## Разработка
 
 ```bash
