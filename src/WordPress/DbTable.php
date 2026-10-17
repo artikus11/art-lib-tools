@@ -62,4 +62,14 @@ class DbTable {
 
 		return $db->prefix . $names[0];
 	}
+
+
+	/**
+	 * Сброс кеша резолва: тесты (кросс-тестовое загрязнение статики PHPUnit)
+	 * и долгоживущие процессы после ручных миграций.
+	 */
+	public static function flush(): void {
+
+		self::$resolved = [];
+	}
 }
