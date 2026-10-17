@@ -6,7 +6,7 @@ use Art\LibTools\Helpers\LogHelper;
 use wpdb;
 
 /**
- * Каталожный мьютекс: одна строка (id=1) в общей таблице wp_skl_catalog_lock.
+ * Каталожный мьютекс: одна строка (id=1) в общей таблице wp_skl__lock_catalog.
  *
  * Защищает фоновые полные проходы записи каталога (wp_posts/wp_postmeta) от
  * параллельной работы: skl-title-uniq (apply) и skl-dedup-scan (scan + purge).
@@ -23,18 +23,24 @@ class CatalogLock {
 
 	private const SOURCE = 'art-lib-tools';
 
+	private const TABLE_SUFFIX = 'skl__lock_catalog';
+
+	private const LEGACY_TABLE_SUFFIX = 'skl_catalog_lock';
+
 	private wpdb $wpdb;
 
 	private string $table;
 
 	private bool $schema_ensured = false;
 
+	private static bool $legacy_checked = false;
+
 
 	/**
 	 * @param  wpdb|null $db           Инстанс $wpdb (по умолчанию глобальный).
 	 * @param  string    $table_suffix Суффикс таблицы; переопределяется в тестах.
 	 */
-	public function __construct( ?wpdb $db = null, string $table_suffix = 'skl_catalog_lock' ) {
+	public function __construct( ?wpdb $db = null, string $table_suffix = self::TABLE_SUFFIX ) {
 
 		global $wpdb;
 
@@ -200,12 +206,18 @@ class CatalogLock {
 
 	/**
 	 * CREATE TABLE IF NOT EXISTS. Идемпотентен, вызывается из acquire.
+	 *
+	 * Ленивая миграция ADR-0004: легаси-таблица skl_catalog_lock переименовывается
+	 * в skl__lock_catalog до CREATE, если старое имя существует, а нового ещё нет.
+	 * Для переопределённого в тестах суффикса ренейминг не выполняется.
 	 */
 	public function ensure_schema(): void {
 
 		if ( $this->schema_ensured ) {
 			return;
 		}
+
+		$this->rename_legacy_table();
 
 		$charset = $this->wpdb->get_charset_collate();
 
@@ -221,5 +233,44 @@ class CatalogLock {
 		);
 
 		$this->schema_ensured = true;
+	}
+
+
+	private function rename_legacy_table(): void {
+
+		$canonical = $this->wpdb->prefix . self::TABLE_SUFFIX;
+
+		if ( $this->table !== $canonical || self::$legacy_checked ) {
+			return;
+		}
+
+		self::$legacy_checked = true;
+
+		$legacy = $this->wpdb->prefix . self::LEGACY_TABLE_SUFFIX;
+
+		if ( ! $this->table_exists( $legacy ) || $this->table_exists( $canonical ) ) {
+			return;
+		}
+
+		$result = $this->wpdb->query( "RENAME TABLE {$legacy} TO {$canonical}" );
+
+		if ( false === $result ) {
+			LogHelper::log(
+				[
+					'message'    => 'CatalogLock.ensure_schema: legacy table rename failed',
+					'old_table'  => $legacy,
+					'new_table'  => $canonical,
+					'wpdb_error' => $this->wpdb->last_error,
+				],
+				'error',
+				self::SOURCE
+			);
+		}
+	}
+
+
+	private function table_exists( string $table ): bool {
+
+		return $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
 	}
 }
