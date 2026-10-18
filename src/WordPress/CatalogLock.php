@@ -88,33 +88,10 @@ class CatalogLock {
 		);
 
 		if ( 1 === (int) $affected ) {
-			LogHelper::log(
-				[
-					'message'      => 'CatalogLock.acquire: lock acquired',
-					'holder'       => $holder,
-					'note'         => $note,
-					'locked_until' => $now + $ttl,
-				],
-				'info',
-				self::SOURCE
-			);
-
 			return null;
 		}
 
-		$status = $this->status();
-
-		LogHelper::log(
-			[
-				'message' => 'CatalogLock.acquire: busy',
-				'holder'  => $holder,
-				'status'  => $status,
-			],
-			'warn',
-			self::SOURCE
-		);
-
-		return $status;
+		return $this->status();
 	}
 
 
@@ -135,16 +112,6 @@ class CatalogLock {
 
 		$ok = 1 === (int) $affected;
 
-		LogHelper::log(
-			[
-				'message' => 'CatalogLock.touch',
-				'holder'  => $holder,
-				'ok'      => $ok,
-			],
-			'debug',
-			self::SOURCE
-		);
-
 		return $ok;
 	}
 
@@ -161,15 +128,6 @@ class CatalogLock {
 				 WHERE id=1 AND holder=%s",
 				$holder
 			)
-		);
-
-		LogHelper::log(
-			[
-				'message' => 'CatalogLock.release',
-				'holder'  => $holder,
-			],
-			'debug',
-			self::SOURCE
 		);
 	}
 
